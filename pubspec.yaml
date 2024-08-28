@@ -40,6 +40,7 @@ dependencies:
   pdf_image_renderer: ^0.7.0
   intl: ^0.19.0
   image_picker: ^1.1.2
+  printing: ^5.13.2
 
 dev_dependencies:
   flutter_test:
