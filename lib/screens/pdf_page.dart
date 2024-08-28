@@ -10,6 +10,7 @@ class PdfPage extends StatefulWidget {
 class _PdfPageState extends State<PdfPage> {
   @override
   Widget build(BuildContext context) {
+    int index = ModalRoute.of(context)!.settings.arguments as int;
     return Scaffold(
       appBar: AppBar(
         title: const Text("PDf Page"),

@@ -7,23 +7,20 @@ class Globals {
   static String? cstName;
   static String? cstEmail;
   static File? cmpLogo;
-  static DateTime? invoiceDate;
-  static DateTime? dueDate;
   static int? invoiceNumber = Random().nextInt(1000000);
-  static double? totalPrice = 0;
-  static List<Map<String, dynamic>>? productList;
-}
+  static double totalPrice = 0;
+  static List<Map<String, dynamic>> productList = [];
+  static List<Map> userInvoiceData = [];
 
-class ItemData {
-  String? itemName;
-  double? itemPrice;
-  int? itemQuantity;
-  List<Map<String, dynamic>>? itemDetails;
+  static void updateTotalPrice() {
+    double total = 0;
 
-  ItemData(
-      {required this.itemName,
-      required this.itemPrice,
-      required this.itemQuantity});
+    Globals.productList.forEach((item) {
+      double itemTotal = (item['price'] as double) * (item['quantity'] as int);
+      item['total'] = itemTotal;
+      total += itemTotal;
+    });
 
-  get getList => itemDetails;
+    Globals.totalPrice = total;
+  }
 }
