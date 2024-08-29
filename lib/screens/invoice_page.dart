@@ -33,7 +33,7 @@ class _InvoicePageState extends State<InvoicePage> {
   @override
   void initState() {
     Globals.productList.clear();
-
+    Globals.cmpLogo = null;
     gst = Globals.totalPrice * 0.18;
     totalWithGst = Globals.totalPrice + gst!;
     super.initState();
@@ -79,6 +79,7 @@ class _InvoicePageState extends State<InvoicePage> {
 
       Globals.userInvoiceData.add({
         "cmpName": Globals.cmpName,
+        "cmpLogo": Globals.cmpLogo,
         "cstName": Globals.cstName,
         "cstEmail": Globals.cstEmail,
         "invoiceNumber": Globals.invoiceNumber,

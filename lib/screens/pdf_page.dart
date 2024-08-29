@@ -1,3 +1,4 @@
+import 'dart:io'; // Add this import for file handling
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -16,13 +17,20 @@ class PdfPage extends StatefulWidget {
 
 class _PdfPageState extends State<PdfPage> {
   Future<Uint8List> generateDocument(int index) async {
-    // Retrieve the data from the selected invoice
     Map data = Globals.userInvoiceData[index];
 
-    // Create a PDF document
+    // Ensure that the company logo is a Uint8List
+    Uint8List? companyLogo;
+    if (data['cmpLogo'] is File) {
+      companyLogo = await (data['cmpLogo'] as File).readAsBytes();
+    } else if (data['cmpLogo'] is Uint8List) {
+      companyLogo = data['cmpLogo'];
+    }
+
+    // 1. Create a PDF document
     final pw.Document doc = pw.Document();
 
-    // Add a page to the document
+    // 2. Add a page to the document
     doc.addPage(
       pw.Page(
         margin: const pw.EdgeInsets.all(32),
@@ -30,221 +38,214 @@ class _PdfPageState extends State<PdfPage> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              // Company Name
-              pw.Text(
-                data['cmpName'].toString(),
-                style: pw.TextStyle(
-                  fontSize: 24,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.blue900,
-                ),
-              ),
-              pw.SizedBox(height: 16),
-
-              // Client Name and Email
-              pw.Text(
-                "Client Name: ${data['cstName']}",
-                style: const pw.TextStyle(fontSize: 18),
-              ),
-              pw.Text(
-                "Client Email: ${data['cstEmail']}",
-                style: const pw.TextStyle(fontSize: 18),
-              ),
-              pw.SizedBox(height: 32),
-
-              // Invoice Information
-              pw.Text(
-                "Invoice Number: ${data['invoiceNumber']}",
-                style:
-                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.SizedBox(height: 8),
-              pw.Text(
-                "Total Price: \$${data['totalPrice'].toStringAsFixed(2)}",
-                style:
-                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.Text(
-                "GST: \$${(data['totalWithGst'] - data['totalPrice']).toStringAsFixed(2)}",
-                style:
-                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.Text(
-                "Total with GST: \$${data['totalWithGst'].toStringAsFixed(2)}",
-                style:
-                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.SizedBox(height: 32),
-
-              // Product List Title
-              pw.Text(
-                "Product List:",
-                style:
-                    pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.SizedBox(height: 8),
-
-              // Product List Headers
               pw.Row(
-                children: [
-                  pw.Expanded(
-                    flex: 3,
-                    child: pw.Text(
-                      'Product Name',
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 16,
-                        color: PdfColors.blue900,
-                      ),
-                    ),
-                  ),
-                  pw.Expanded(
-                    flex: 1,
-                    child: pw.Text(
-                      'Quantity',
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 16,
-                        color: PdfColors.blue900,
-                      ),
-                    ),
-                  ),
-                  pw.Expanded(
-                    flex: 1,
-                    child: pw.Text(
-                      'Price',
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 16,
-                        color: PdfColors.blue900,
-                      ),
-                    ),
-                  ),
-                  pw.Expanded(
-                    flex: 1,
-                    child: pw.Text(
-                      'Total',
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 16,
-                        color: PdfColors.blue900,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              pw.Divider(color: PdfColors.blue900),
-
-              // Product List Items
-              ...data['productList'].map<pw.Widget>((product) {
-                final total = product['price'] * product['quantity'];
-                return pw.Row(
-                  children: [
-                    pw.Expanded(
-                      flex: 3,
-                      child: pw.Text(
-                        product['name'].toString(),
-                        style: pw.TextStyle(fontSize: 14),
-                      ),
-                    ),
-                    pw.Expanded(
-                      flex: 1,
-                      child: pw.Text(
-                        product['quantity'].toString(),
-                        style: pw.TextStyle(fontSize: 14),
-                      ),
-                    ),
-                    pw.Expanded(
-                      flex: 1,
-                      child: pw.Text(
-                        "\$${product['price'].toStringAsFixed(2)}",
-                        style: pw.TextStyle(fontSize: 14),
-                      ),
-                    ),
-                    pw.Expanded(
-                      flex: 1,
-                      child: pw.Text(
-                        "\$${total.toStringAsFixed(2)}",
-                        style: pw.TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-
-              pw.SizedBox(height: 32),
-
-              // Billing Information Section
-              pw.Divider(color: PdfColors.grey),
-              pw.SizedBox(height: 16),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.end,
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        "Subtotal:",
+                        data['cmpName'].toString(),
                         style: pw.TextStyle(
-                          fontSize: 16,
+                          fontSize: 28,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.blue900,
+                        ),
+                      ),
+                      pw.SizedBox(height: 12),
+                      pw.Text(
+                        "Bill To:",
+                        style: pw.TextStyle(
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.blueGrey800,
+                        ),
+                      ),
+                      pw.SizedBox(height: 7),
+                      pw.Text(
+                        data['cstName'],
+                        style: pw.TextStyle(
+                          fontSize: 18,
                           fontWeight: pw.FontWeight.bold,
                         ),
                       ),
+                      pw.SizedBox(height: 2),
                       pw.Text(
-                        "GST:",
-                        style: pw.TextStyle(
-                          fontSize: 16,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.Text(
-                        "Total:",
-                        style: pw.TextStyle(
-                          fontSize: 16,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
+                        data['cstEmail'],
+                        style: const pw.TextStyle(fontSize: 16),
                       ),
                     ],
                   ),
-                  pw.SizedBox(width: 16),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        "\$${data['totalPrice'].toStringAsFixed(2)}",
-                        style: pw.TextStyle(
-                          fontSize: 16,
-                          fontWeight: pw.FontWeight.bold,
+                  if (companyLogo != null)
+                    pw.Container(
+                      height: 110,
+                      width: 110,
+                      decoration: pw.BoxDecoration(
+                        shape: pw.BoxShape.circle,
+                        image: pw.DecorationImage(
+                          image: pw.MemoryImage(companyLogo),
+                          fit: pw.BoxFit.cover,
                         ),
                       ),
-                      pw.Text(
-                        "\$${(data['totalWithGst'] - data['totalPrice']).toStringAsFixed(2)}",
-                        style: pw.TextStyle(
-                          fontSize: 16,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.Text(
-                        "\$${data['totalWithGst'].toStringAsFixed(2)}",
-                        style: pw.TextStyle(
-                          fontSize: 16,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
-
-              pw.SizedBox(height: 32),
-
-              // Footer
+              pw.SizedBox(height: 18),
               pw.Text(
-                "Thank you for your business!",
+                "Invoice Number: ${data['invoiceNumber']}",
                 style: pw.TextStyle(
                   fontSize: 16,
-                  fontStyle: pw.FontStyle.italic,
-                  color: PdfColors.grey700,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.grey800,
+                ),
+              ),
+              pw.SizedBox(height: 8),
+              pw.Text(
+                "Items:",
+                style: pw.TextStyle(
+                  fontSize: 20,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.blue900,
+                ),
+              ),
+              pw.SizedBox(height: 10),
+              ...data['productList'].map<pw.Widget>(
+                (product) {
+                  final total = product['price'] * product['quantity'];
+                  return pw.Container(
+                    margin: const pw.EdgeInsets.symmetric(vertical: 10),
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.blue50,
+                      borderRadius: pw.BorderRadius.circular(8),
+                      border: pw.Border.all(color: PdfColors.blue900, width: 1),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          product['name'].toString(),
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 10),
+                        pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text(
+                              "Quantity: ${product['quantity']}",
+                              style: const pw.TextStyle(fontSize: 14),
+                            ),
+                            pw.Text(
+                              "Price: \$ ${product['price'].toStringAsFixed(2)}",
+                              style: const pw.TextStyle(fontSize: 14),
+                            ),
+                            pw.Text(
+                              "Total: \$ ${total.toStringAsFixed(2)}",
+                              style: const pw.TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ).toList(),
+              pw.SizedBox(height: 20),
+              pw.Container(
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey50,
+                  borderRadius: pw.BorderRadius.circular(8),
+                  border: pw.Border.all(color: PdfColors.grey700, width: 1),
+                ),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          "Subtotal:",
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          "GST:",
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          "Total:",
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Text(
+                          "\$ ${data['totalPrice'].toStringAsFixed(2)}",
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          "\$ ${(data['totalWithGst'] - data['totalPrice']).toStringAsFixed(2)}",
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          "\$ ${data['totalWithGst'].toStringAsFixed(2)}",
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 30),
+              pw.Spacer(),
+              pw.Divider(color: PdfColors.blueGrey900),
+              pw.SizedBox(height: 10),
+              pw.Center(
+                child: pw.Text(
+                  "Thank you for your business!",
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    fontStyle: pw.FontStyle.italic,
+                    color: PdfColors.grey700,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Center(
+                child: pw.Text(
+                  "www.${data['cmpName']}.com",
+                  style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blue900,
+                  ),
                 ),
               ),
             ],
@@ -253,7 +254,7 @@ class _PdfPageState extends State<PdfPage> {
       ),
     );
 
-    // Save the document and return the bytes
+    // 3. Save the document and return the bytes
     return doc.save();
   }
 
